@@ -1,7 +1,7 @@
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-from Generaldistribution import Distribution
+from .Generaldistribution import Distribution
 
 class Binomial(Distribution):
 
@@ -18,11 +18,11 @@ class Binomial(Distribution):
     """
 
     def __init__(self, prob=.5, size=20): 
-        self.p = prob
+
         self.n = size
-        mu = self.calculate_mean(self)
-        sigma = self.calculate_stdev(self)
-        Distribution.__init__(self, mu = mu, sigma=sigma) 
+        self.p = prob
+        
+        Distribution.__init__(self, mu = self.calculate_mean(), sigma=self.calculate_stdev()) 
 
     def calculate_mean(self):
         """Method to calculate the mean of the data set.
@@ -67,11 +67,13 @@ class Binomial(Distribution):
         """   
         self.n = len(self.data)
         self.p = np.mean(self.data)
-        self.calculate_mean(self)
-        self.calculate_stdev(self)
+        self.calculate_mean()
+        self.calculate_stdev()
+
+        return self.p, self.n
 
 
-    def plot_histogram(self):
+    def plot_bar(self):
         """Function to output a histogram of the instance variable data using 
         matplotlib pyplot library.
         Args:
@@ -80,13 +82,14 @@ class Binomial(Distribution):
             None
         """
 
-        plt.hist(self.data)
+        plt.hist(self.data, bins=2)
         plt.title('Histogram of Data')
+        plt.title(f'Binomial distribution`s histogram: n = {self.n}; p = {self.p}')
         plt.xlabel('data')
         plt.ylabel('count')     
 
 
-    def plot_histogram_pdf(self, n_spaces = 50):
+    def plot_bar_pdf(self):
         """
         Method to output a histogram of the instance variable data using 
         matplotlib pyplot library.
@@ -95,22 +98,18 @@ class Binomial(Distribution):
             None
             
         Returns:
-            None
+            list: x values for the pdf plot
+            list: y values for the pdf plot
         """
-        min_range = min(self.data)
-        max_range = max(self.data)
-        
-         # calculates the interval between x values
-        interval = 1.0 * (max_range - min_range) / n_spaces
-
+       
         x = []
         y = []
         
         # calculate the x values to visualize
-        for i in range(n_spaces):
-            tmp = min_range + interval*i
-            x.append(tmp)
-            y.append(self.pdf(tmp))
+        for i in range(self.n):
+            k=i+1
+            x.append(k)
+            y.append(self.pdf(self, k))
 
         # make the plots
         fig, axes = plt.subplots(2,sharex=True)
@@ -126,21 +125,22 @@ class Binomial(Distribution):
 
         return x, y
 
-    def pdf(self, x):
+    def pdf(self, k):
         """Probability density function calculator for the Binomial distribution.
         
         Args:
-            x (float): point for calculating the probability density function
+            k (float): point for calculating the probability density function
             
         
         Returns:
             float: probability density function output
         """
-        sigma = self.stdev
-        mu = self.mean
-
-        prob = (1/(sigma*(2*math.pi)**0.5))*np.exp((-(x-mu)**2)/(2*sigma**2))
-
+        tests = np.random.choice([1,0], size=[int(1e7),self.n], p=[self.p, (1-self.p)])
+        # sums of all tests
+        test_sums = tests.sum(axis=1)
+        # proportion of tests that produced exactly one head
+        prob = (test_sums == k).mean()
+        
         return prob
 
     def __add__(self, other):
@@ -154,11 +154,16 @@ class Binomial(Distribution):
             Binomial: Binomial distribution
             
         """
-        result = Binomial()
+        try:
+            assert self.p == other.p, 'p values are not equal'
+        except AssertionError as error:
+            raise
 
-        result.mean = self.mean + other.mean
-        result.stdev = np.sqrt(self.stdev**2 + other.stdev**2)
-        
+        p = self.p
+        n = self.n + other.n
+
+        result = Binomial(prob=p, size=n)
+       
         return result
 
     def __repr__(self):
@@ -172,16 +177,17 @@ class Binomial(Distribution):
             string: characteristics of the Binomial
         
         """
-        return f"mean {self.mean}, standard deviation {self.stdev}"
+        return f"mean {self.mean}, standard deviation {self.stdev}, p {self.p}, n {self.n}"
 
-    def read_data_file(self, file_name):
-        """Function to read in data from a txt file. The txt file should have one number (float) per line. The numbers are stored in the data attribute. After reading the file, the mean and standard deviation are calculated
-        Args:
-            file_name (string): name of a file to read from
-        Returns:
-            None
-        """
-        Distribution.read_data_file(self, file_name)
+    # def read_data_file(self, file_name):
+    #     """Function to read in data from a txt file. The txt file should have one number (float) per line. The numbers are stored in the data attribute. After reading the file, the mean and standard deviation are calculated
+    #     Args:
+    #         file_name (string): name of a file to read from
+    #     Returns:
+    #         None
+    #     """
+    #     Distribution.read_data_file(self, file_name)
 
-        self.mean = self.calculate_mean()
-        self.stdev = self.calculate_stdev()
+    #     p,n = self.replace_stats_with_data()
+
+    #     self.__init__(p,n)

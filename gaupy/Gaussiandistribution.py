@@ -1,7 +1,7 @@
 import math
 import numpy as np
 import matplotlib.pyplot as plt
-from Generaldistribution import Distribution
+from .Generaldistribution import Distribution
 
 class Gaussian(Distribution):
 
@@ -31,7 +31,7 @@ class Gaussian(Distribution):
 
         return mu
 
-    def calculate_stdev(self):
+    def calculate_stdev(self, sample=True):
 
         """Method to calculate the standard deviation of the data set.
         
@@ -42,10 +42,23 @@ class Gaussian(Distribution):
             float: standard deviation of the data set
     
         """
-        sigma = np.std(self.data)
-        self.stdev = sigma
 
-        return sigma
+        if sample==True:
+            n = len(self.data)-1
+        else:
+            n = len(self.data)
+
+        mean = self.calculate_mean()
+        sigma = 0
+
+        for d in self.data:
+            sigma += (d - mean) ** 2
+		
+        sigma = math.sqrt(sigma / n)
+	
+        self.stdev = sigma
+		
+        return self.stdev
 
     def plot_histogram(self):
         """Function to output a histogram of the instance variable data using 
@@ -150,14 +163,13 @@ class Gaussian(Distribution):
         """
         return f"mean {self.mean}, standard deviation {self.stdev}"
 
-    def read_data_file(self, file_name):
-        """Function to read in data from a txt file. The txt file should have one number (float) per line. The numbers are stored in the data attribute. After reading the file, the mean and standard deviation are calculated
-        Args:
-            file_name (string): name of a file to read from
-        Returns:
-            None
-        """
-        Distribution.read_data_file(self, file_name)
+    # def read_data_file(self, file_name):
+    #     """Function to read in data from a txt file. The txt file should have one number (float) per line. The numbers are stored in the data attribute. After reading the file, the mean and standard deviation are calculated
+    #     Args:
+    #         file_name (string): name of a file to read from
+    #     Returns:
+    #         None
+    #     """
+    #     Distribution.read_data_file(self, file_name)
 
-        self.mean = self.calculate_mean()
-        self.stdev = self.calculate_stdev()
+    #     self.__init__(self.calculate_mean(), self.calculate_stdev())
